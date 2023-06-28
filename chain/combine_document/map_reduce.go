@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/wejick/gochain/callback"
+	"github.com/wejick/gochain/chain"
 	"github.com/wejick/gochain/chain/llm_chain"
 	"github.com/wejick/gochain/model"
 	"github.com/wejick/gochain/prompt"
@@ -17,15 +19,19 @@ type MapReduceCombineDocument struct {
 	reducePrompt      *prompt.PromptTemplate
 	llmChain          *llm_chain.LLMChain
 	splitter          textsplitter.TextSplitter
+	callbackManager   *callback.Manager
 	promptTemplateKey string
 	maxDocLength      int
 }
 
 // NewMapReduceCombineDocument creates new instance of MapReduceCombineDocument
 func NewMapReduceCombineDocument(mapPrompt *prompt.PromptTemplate, reducePrompt *prompt.PromptTemplate,
-	promptTemplateKey string, llmChain *llm_chain.LLMChain, splitter textsplitter.TextSplitter, maxDocLength int) *MapReduceCombineDocument {
+	promptTemplateKey string, llmChain *llm_chain.LLMChain, splitter textsplitter.TextSplitter, maxDocLength int, callbackManager *callback.Manager, verbose bool) *MapReduceCombineDocument {
 	if maxDocLength == 0 {
 		maxDocLength = 1000
+	}
+	if verbose {
+		callbackManager.RegisterCallback(chain.CallbackChainEnd, callback.VerboseCallback)
 	}
 	return &MapReduceCombineDocument{
 		mapPrompt:         mapPrompt,
@@ -34,6 +40,7 @@ func NewMapReduceCombineDocument(mapPrompt *prompt.PromptTemplate, reducePrompt 
 		promptTemplateKey: promptTemplateKey,
 		splitter:          splitter,
 		maxDocLength:      maxDocLength,
+		callbackManager:   callbackManager,
 	}
 }
 
@@ -111,8 +118,21 @@ func (M *MapReduceCombineDocument) Run(ctx context.Context, input map[string]str
 	if _, ok := input["input"]; !ok {
 		return output, errors.New("input[\"input\"] is not specified")
 	}
+	//trigger callback chain start
+	M.callbackManager.TriggerEvent(ctx, chain.CallbackChainStart, callback.CallbackData{
+		FunctionName: "MapReduceCombineDocument.Run",
+		Input:        input,
+		Output:       output,
+	})
 	output = make(map[string]string)
 	output["output"], err = M.Combine(ctx, []string{input["input"]})
+
+	//trigger callback chain end
+	M.callbackManager.TriggerEvent(ctx, chain.CallbackChainEnd, callback.CallbackData{
+		FunctionName: "MapReduceCombineDocument.Run",
+		Input:        input,
+		Output:       output,
+	})
 
 	return output, err
 }

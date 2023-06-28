@@ -83,6 +83,7 @@ func TestStuffCombineDocument_Run(t *testing.T) {
 		prompt            *prompt.PromptTemplate
 		llmChain          *llm_chain.LLMChain
 		promptTemplateKey string
+		callbackManager   *callback.Manager
 	}
 	type args struct {
 		ctx     context.Context
@@ -106,6 +107,7 @@ func TestStuffCombineDocument_Run(t *testing.T) {
 				prompt:            echoPrompt,
 				llmChain:          echoLlmChain,
 				promptTemplateKey: "echo",
+				callbackManager:   callback.NewManager(),
 			},
 			args: args{
 				input: map[string]string{"input": "crowded,jakarta"},
@@ -119,6 +121,7 @@ func TestStuffCombineDocument_Run(t *testing.T) {
 				prompt:            tt.fields.prompt,
 				llmChain:          tt.fields.llmChain,
 				promptTemplateKey: tt.fields.promptTemplateKey,
+				callbackManager:   tt.fields.callbackManager,
 			}
 			gotOutput, err := S.Run(tt.args.ctx, tt.args.input, tt.args.options...)
 			if (err != nil) != tt.wantErr {
@@ -136,6 +139,7 @@ func TestStuffCombineDocument_SimpleRun(t *testing.T) {
 	type fields struct {
 		prompt            *prompt.PromptTemplate
 		llmChain          *llm_chain.LLMChain
+		callbackManager   *callback.Manager
 		promptTemplateKey string
 	}
 	type args struct {
@@ -153,8 +157,9 @@ func TestStuffCombineDocument_SimpleRun(t *testing.T) {
 		{
 			name: "empty",
 			fields: fields{
-				prompt:   emptyPrompt,
-				llmChain: echoLlmChain,
+				prompt:          emptyPrompt,
+				llmChain:        echoLlmChain,
+				callbackManager: callback.NewManager(),
 			},
 		},
 		{
@@ -162,6 +167,7 @@ func TestStuffCombineDocument_SimpleRun(t *testing.T) {
 			fields: fields{
 				prompt:            echoPrompt,
 				llmChain:          echoLlmChain,
+				callbackManager:   callback.NewManager(),
 				promptTemplateKey: "echo",
 			},
 			args: args{
@@ -175,6 +181,7 @@ func TestStuffCombineDocument_SimpleRun(t *testing.T) {
 			S := &StuffCombineDocument{
 				prompt:            tt.fields.prompt,
 				llmChain:          tt.fields.llmChain,
+				callbackManager:   tt.fields.callbackManager,
 				promptTemplateKey: tt.fields.promptTemplateKey,
 			}
 			gotOutput, err := S.SimpleRun(tt.args.ctx, tt.args.input, tt.args.options...)
