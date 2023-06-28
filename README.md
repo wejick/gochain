@@ -1,3 +1,5 @@
+**We rename to** https://github.com/wejick/gchain
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/wejick/gochain.svg)](https://pkg.go.dev/github.com/wejick/gochain)
 ![Build workflow](https://github.com/wejick/gochain/actions/workflows/go.yml/badge.svg)
 [![Integration test](https://github.com/wejick/gochain/actions/workflows/integration.yml/badge.svg)](https://github.com/wejick/gochain/actions/workflows/integration.yml)
