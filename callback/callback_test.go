@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestManager_RegisterCallback(t *testing.T) {
@@ -55,6 +57,10 @@ func TestManager_TriggerEvent(t *testing.T) {
 		callback2Invoked = true
 	})
 
+	manager.RegisterCallback("event3", func(ctx context.Context, data CallbackData) {
+		assert.Equal(t, data.EventName, "event3")
+	})
+
 	// Prepare test data
 	ctx := context.Background()
 	data := CallbackData{
@@ -82,6 +88,15 @@ func TestManager_TriggerEvent(t *testing.T) {
 	if !callback2Invoked {
 		t.Errorf("Callback 2 was not invoked")
 	}
+
+	// check if TriggerEvent set event name when it's not provided
+	manager.TriggerEvent(ctx, "event3", CallbackData{
+		RunID:        "123",
+		FunctionName: "test",
+		Input:        map[string]string{"input1": "value1"},
+		Output:       map[string]string{"output1": "value1"},
+		Data:         "some data",
+	})
 }
 
 // Example callback functions

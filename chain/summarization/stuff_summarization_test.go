@@ -14,7 +14,7 @@ var echoLlmChain, _ = llm_chain.NewLLMChain(&model.LLMModelMock{
 		return prompt, nil
 	},
 }, callback.NewManager(), nil, false)
-var testChain, _ = NewStuffSummarizationChain(echoLlmChain, "", "text")
+var testChain, _ = NewStuffSummarizationChain(echoLlmChain, callback.NewManager(), "", "text", false)
 
 func TestStuffSummarizationChain_SimpleRun(t *testing.T) {
 	type args struct {

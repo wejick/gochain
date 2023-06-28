@@ -55,6 +55,10 @@ func (m *Manager) RegisterCallback(event Event, callback Callback) {
 }
 
 func (m *Manager) TriggerEvent(ctx context.Context, event Event, data CallbackData) {
+	if data.EventName == "" {
+		data.EventName = string(event)
+	}
+
 	if callbacks, ok := m.callbacks[event]; ok {
 		for _, callback := range callbacks {
 			callback(ctx, data)

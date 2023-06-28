@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/wejick/gochain/callback"
 	"github.com/wejick/gochain/chain"
 	"github.com/wejick/gochain/chain/llm_chain"
 	"github.com/wejick/gochain/model"
@@ -17,15 +18,22 @@ var _ chain.BaseChain = &StuffCombineDocument{}
 type StuffCombineDocument struct {
 	prompt            *prompt.PromptTemplate
 	llmChain          *llm_chain.LLMChain
+	callbackManager   *callback.Manager
 	promptTemplateKey string
 }
 
 // NewStuffCombineDocument creates new instance of StuffCombineDocument
-func NewStuffCombineDocument(prompt *prompt.PromptTemplate,
-	templateKey string, llmChain *llm_chain.LLMChain) *StuffCombineDocument {
+func NewStuffCombineDocument(callbackManager *callback.Manager, prompt *prompt.PromptTemplate,
+	templateKey string, llmChain *llm_chain.LLMChain, verbose bool) *StuffCombineDocument {
+
+	if verbose {
+		callbackManager.RegisterCallback(chain.CallbackChainEnd, callback.VerboseCallback)
+	}
+
 	return &StuffCombineDocument{
 		prompt:            prompt,
 		llmChain:          llmChain,
+		callbackManager:   callbackManager,
 		promptTemplateKey: templateKey,
 	}
 }
@@ -53,14 +61,41 @@ func (S *StuffCombineDocument) Run(ctx context.Context, input map[string]string,
 	if _, ok := input["input"]; !ok {
 		return output, errors.New("input[\"input\"] is not specified")
 	}
+	//trigger callback chain start
+	S.callbackManager.TriggerEvent(ctx, chain.CallbackChainStart, callback.CallbackData{
+		FunctionName: "StuffCombineDocument.Run",
+		Input:        input,
+		Output:       output,
+	})
 	output = make(map[string]string)
 	output["output"], err = S.Combine(ctx, []string{input["input"]})
+
+	//trigger callback chain end
+	S.callbackManager.TriggerEvent(ctx, chain.CallbackChainEnd, callback.CallbackData{
+		FunctionName: "StuffCombineDocument.Run",
+		Input:        input,
+		Output:       output,
+	})
 
 	return
 }
 
 // SimpleRun will run the input string agains llmchain
 func (S *StuffCombineDocument) SimpleRun(ctx context.Context, input string, options ...func(*model.Option)) (output string, err error) {
+	//trigger callback chain start
+	S.callbackManager.TriggerEvent(ctx, chain.CallbackChainStart, callback.CallbackData{
+		FunctionName: "StuffCombineDocument.SimpleRun",
+		Input:        map[string]string{"input": input},
+		Output:       map[string]string{"output": output},
+	})
+
 	output, err = S.Combine(ctx, []string{input})
+
+	//trigger callback chain end
+	S.callbackManager.TriggerEvent(ctx, chain.CallbackChainEnd, callback.CallbackData{
+		FunctionName: "StuffCombineDocument.SimpleRun",
+		Input:        map[string]string{"input": input},
+		Output:       map[string]string{"output": output},
+	})
 	return
 }
